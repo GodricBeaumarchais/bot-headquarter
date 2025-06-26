@@ -1,0 +1,47 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider     = "prisma-client-js"
+  output       = "../generated/prisma"
+  moduleFormat = "commonjs"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id            String    @id @default(uuid())
+  discordId     String    @unique
+  username      String
+  token         Int       @default(0)
+  streak        Int       @default(0)
+  lastDailyDate DateTime?
+  roleId        String    // UUID du rôle
+  role          Role      @relation(fields: [roleId], references: [id])
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+  ootdReactions OOTDReaction[]
+}
+
+model Role {
+  id          String   @id @default(uuid())
+  name        String   @unique
+  discordId   String   @unique // ID du rôle Discord
+  users       User[]
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+}
+
+model OOTDReaction {
+  id          String   @id @default(uuid())
+  messageId   String   @unique
+  authorId    String   // ID de l'auteur du message OOTD
+  reactorId   String   // ID de celui qui a réagi
+  createdAt   DateTime @default(now())
+  author      User     @relation(fields: [authorId], references: [discordId])
+  
+  @@unique([messageId, reactorId])
+}
