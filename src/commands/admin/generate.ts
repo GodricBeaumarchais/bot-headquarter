@@ -47,7 +47,7 @@ export const execute: Command['execute'] = async (interaction) => {
         const user = await DatabaseManager.getUser(targetUser.id);
         if (!user) {
             await interaction.editReply({
-                content: `❌ ${targetUser.username} n'a pas encore de compte.`
+                content: `❌ ${targetUser.username} n'a pas encore de compte. Utilisez \`!hq signin\` pour créer un compte.`
             });
             return;
         }

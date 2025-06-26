@@ -87,15 +87,7 @@ export const execute: Event<typeof name>['execute'] = async (reaction: MessageRe
             tokensEarned: 1 // L'auteur gagne 1 token
         });
 
-        // Envoyer un message de confirmation
-        await reaction.message.reply(
-            `👗 **Nouvelle réaction OOTD !**\n` +
-            `${user.username} a réagi à l'OOTD de ${result.authorUsername}\n` +
-            `📊 **Total de réactions :** ${result.reactionCount}\n` +
-            `💰 **${result.authorUsername} gagne 1 ${CURRENCY_NAME} !**\n` +
-            `💳 **Nouveau solde :** ${result.authorTokens} ${CURRENCY_NAME}`
-        );
-
+        // Ne plus envoyer de message de confirmation
         console.log(`👗 OOTD réaction: ${user.username} → ${result.authorUsername} (${result.reactionCount} réactions total)`);
 
     } catch (error) {
@@ -128,7 +120,7 @@ export const execute: Event<typeof name>['execute'] = async (reaction: MessageRe
             } else if (error.message === 'Vous avez déjà réagi à ce message OOTD') {
                 errorMessage = '❌ Vous avez déjà réagi à ce message OOTD';
             } else if (error.message.includes('non trouvé')) {
-                errorMessage = '❌ Un des utilisateurs n\'a pas de compte. Utilisez `/signin` pour créer un compte.';
+                errorMessage = '❌ Un des utilisateurs n\'a pas de compte. Utilisez `!hq signin` pour créer un compte.';
             }
         }
         

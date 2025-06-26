@@ -64,14 +64,14 @@ export const execute: Command['execute'] = async (interaction) => {
 
         if (!fromUserData) {
             await interaction.editReply({
-                content: `❌ ${fromUser.username} n'a pas encore de compte.`
+                content: `❌ ${fromUser.username} n'a pas encore de compte. Utilisez \`!hq signin\` pour créer un compte.`
             });
             return;
         }
 
         if (!toUserData) {
             await interaction.editReply({
-                content: `❌ ${toUser.username} n'a pas encore de compte.`
+                content: `❌ ${toUser.username} n'a pas encore de compte. Utilisez \`!hq signin\` pour créer un compte.`
             });
             return;
         }

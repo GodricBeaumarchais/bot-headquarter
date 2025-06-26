@@ -68,14 +68,7 @@ export const execute: Event<typeof name>['execute'] = async (reaction: MessageRe
             tokensEarned: -1 // L'auteur perd 1 token
         });
 
-        // Envoyer un message de confirmation
-        await reaction.message.reply(
-            `👗 **Réaction OOTD retirée !**\n` +
-            `${user.username} a retiré sa réaction à l'OOTD de ${messageAuthor.username}\n` +
-            `💰 **${messageAuthor.username} perd 1 ${CURRENCY_NAME} !**\n` +
-            `💳 **Nouveau solde :** ${updatedAuthor.token} ${CURRENCY_NAME}`
-        );
-
+        // Ne plus envoyer de message de confirmation
         console.log(`👗 OOTD réaction retirée: ${user.username} → ${messageAuthor.username} (-1 ${CURRENCY_NAME})`);
 
     } catch (error) {
@@ -106,7 +99,7 @@ export const execute: Event<typeof name>['execute'] = async (reaction: MessageRe
             if (error.message === 'Solde insuffisant') {
                 errorMessage = '❌ Solde insuffisant pour retirer des tokens';
             } else if (error.message.includes('non trouvé')) {
-                errorMessage = '❌ Un des utilisateurs n\'a pas de compte.';
+                errorMessage = '❌ Un des utilisateurs n\'a pas de compte. Utilisez `!hq signin` pour créer un compte.';
             }
         }
         

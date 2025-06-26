@@ -34,12 +34,12 @@ export class PrefixCommandHandler {
             const hasOOTDCommand = message.content.toLowerCase().includes(`${this.prefix} ootd`);
 
             // Si c'est un post OOTD avec image, traiter et arrêter là
-            if (message.channelId === OOTD_CHANNEL_ID && hasImage && hasOOTDCommand) {
-                commandName = 'ootd_post';
-                await this.handleOOTDPost(message);
-                success = true;
-                return; // Arrêter le traitement ici
-            }
+            // if (message.channelId === OOTD_CHANNEL_ID && hasImage && hasOOTDCommand) {
+            //     commandName = 'ootd_post';
+            //     await this.handleOOTDPost(message);
+            //     success = true;
+            //     return; // Arrêter le traitement ici
+            // }
             
             // Ignorer les messages du bot et ceux qui ne commencent pas par le préfixe
             if (message.author.bot || !message.content.startsWith(this.prefix)) {
@@ -79,13 +79,6 @@ export class PrefixCommandHandler {
                 case 'streak':
                     await this.handleStreak(message, args);
                     success = true;
-                    break;
-                case 'ootd':
-                    // Ne traiter ootd que s'il n'y a pas d'image (pour éviter le double traitement)
-                    if (!hasImage) {
-                        await this.handleOOTDStats(message, args);
-                        success = true;
-                    }
                     break;
                 case 'generate':
                     await this.handleGenerate(message, args);
@@ -383,12 +376,12 @@ export class PrefixCommandHandler {
             const toUserData = await DatabaseManager.getUser(toUser.id);
 
             if (!fromUserData) {
-                await message.reply(`❌ ${fromUser.username} n'a pas encore de compte.`);
+                await message.reply(`❌ ${fromUser.username} n'a pas encore de compte. Utilisez \`${this.prefix} signin\` pour créer un compte.`);
                 return;
             }
 
             if (!toUserData) {
-                await message.reply(`❌ ${toUser.username} n'a pas encore de compte.`);
+                await message.reply(`❌ ${toUser.username} n'a pas encore de compte. Utilisez \`${this.prefix} signin\` pour créer un compte.`);
                 return;
             }
 
@@ -468,7 +461,7 @@ export class PrefixCommandHandler {
             // Vérifier si l'utilisateur cible a un compte
             const user = await DatabaseManager.getUser(targetUser.id);
             if (!user) {
-                await message.reply(`❌ ${targetUser.username} n'a pas encore de compte.`);
+                await message.reply(`❌ ${targetUser.username} n'a pas encore de compte. Utilisez \`${this.prefix} signin\` pour créer un compte.`);
                 return;
             }
 
@@ -536,7 +529,7 @@ export class PrefixCommandHandler {
             // Vérifier si l'utilisateur cible a un compte
             const user = await DatabaseManager.getUser(targetUser.id);
             if (!user) {
-                await message.reply(`❌ ${targetUser.username} n'a pas encore de compte.`);
+                await message.reply(`❌ ${targetUser.username} n'a pas encore de compte. Utilisez \`${this.prefix} signin\` pour créer un compte.`);
                 return;
             }
 

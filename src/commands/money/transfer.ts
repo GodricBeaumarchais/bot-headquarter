@@ -36,7 +36,7 @@ export const execute: Command['execute'] = async (interaction: ChatInputCommandI
         
         if (!fromUser) {
             await interaction.reply({
-                content: '❌ Vous devez d\'abord créer un compte avec `/signin`',
+                content: '❌ Vous devez d\'abord créer un compte avec `!hq signin`',
                 ephemeral: true
             });
             return;
@@ -44,7 +44,7 @@ export const execute: Command['execute'] = async (interaction: ChatInputCommandI
         
         if (!toUser) {
             await interaction.reply({
-                content: '❌ Le destinataire doit d\'abord créer un compte avec `/signin`',
+                content: '❌ Le destinataire doit d\'abord créer un compte avec `!hq signin`',
                 ephemeral: true
             });
             return;
