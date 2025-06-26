@@ -6,6 +6,7 @@ import * as generate from '../commands/admin/generate';
 import * as remove from '../commands/admin/remove';
 import * as exchange from '../commands/admin/exchange';
 import * as logs from '../commands/admin/logs';
+// import * as ootd from '../commands/fun/ootd';
 import { withLogging } from './commandWrapper';
 
 export class CommandHandler {
@@ -25,6 +26,7 @@ export class CommandHandler {
         this.commands.set(remove.data.name, withLogging(remove as Command));
         this.commands.set(exchange.data.name, withLogging(exchange as Command));
         this.commands.set(logs.data.name, withLogging(logs as Command));
+        // this.commands.set(ootd.data.name, withLogging(ootd as Command));
         
         console.log(`✅ ${this.commands.size} commandes chargées`);
     }
