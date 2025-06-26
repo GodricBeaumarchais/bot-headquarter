@@ -22,11 +22,14 @@ async function deployCommands() {
         // Créer l'instance REST
         const rest = new REST({ version: '10' }).setToken(process.env.DISCORD_TOKEN!);
         
+        // Extraire le CLIENT_ID du token Discord
+        const clientId = process.env.DISCORD_TOKEN!.split('.')[0];
+        
         // Déployer les commandes globalement
         console.log('🌍 Déploiement global des commandes...');
         
         const data = await rest.put(
-            Routes.applicationCommands(process.env.CLIENT_ID!),
+            Routes.applicationCommands(clientId),
             { body: commands }
         );
         

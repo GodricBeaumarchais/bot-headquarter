@@ -1,10 +1,11 @@
 import dotenv from 'dotenv';
-import { Client, GatewayIntentBits, Message, Events } from 'discord.js';
+import { Client, GatewayIntentBits, Message, Events, Partials } from 'discord.js';
 import { CommandHandler } from './utils/commandHandler';
 import { PrefixCommandHandler } from './utils/prefixCommandHandler';
 import { DatabaseManager } from './utils/database';
 import { BOT_PREFIX } from './utils/constants';
 import * as messageReactionAddEvent from './events/messageReactionAdd';
+import * as messageReactionRemoveEvent from './events/messageReactionRemove';
 
 dotenv.config();
 
@@ -12,8 +13,11 @@ const client = new Client({
     intents: [
         GatewayIntentBits.Guilds, 
         GatewayIntentBits.GuildMessages, 
-        GatewayIntentBits.MessageContent
+        GatewayIntentBits.MessageContent,
+        GatewayIntentBits.GuildMessageReactions,
+        GatewayIntentBits.GuildMembers
     ],
+    partials: [Partials.Message, Partials.Channel, Partials.Reaction, Partials.User]
 });
 
 // Gestionnaires de commandes
@@ -27,6 +31,9 @@ client.once('ready', async () => {
     console.log('🔧 Commandes slash disponibles');
     console.log('👗 Système OOTD activé');
     console.log('👑 Système de rôles activé');
+    
+    // Vérifier la configuration OOTD
+    console.log(`📍 Canal OOTD configuré: ${process.env.OOTD_CHANNEL_ID || 'NON CONFIGURÉ'}`);
     
     // Initialiser les rôles dans la base de données
     try {
@@ -76,9 +83,14 @@ client.on(Events.MessageCreate, async (message: Message) => {
     await prefixCommandHandler.handleMessage(message);
 });
 
-// Gestion des réactions OOTD
+// Gestion des réactions OOTD (ajout)
 client.on(Events.MessageReactionAdd, async (reaction, user, ...args) => {
     await messageReactionAddEvent.execute(reaction, user, ...args);
+});
+
+// Gestion des retraits de réactions OOTD
+client.on(Events.MessageReactionRemove, async (reaction, user, ...args) => {
+    await messageReactionRemoveEvent.execute(reaction, user, ...args);
 });
 
 client.login(process.env.DISCORD_TOKEN); 

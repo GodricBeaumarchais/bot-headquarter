@@ -24,6 +24,8 @@ model User {
   createdAt     DateTime  @default(now())
   updatedAt     DateTime  @updatedAt
   ootdReactions OOTDReaction[]
+  commandLogs   CommandLog[]
+  reactionLogs  ReactionLog[]
 }
 
 model Role {
@@ -44,4 +46,34 @@ model OOTDReaction {
   author      User     @relation(fields: [authorId], references: [discordId])
   
   @@unique([messageId, reactorId])
+}
+
+model CommandLog {
+  id          String   @id @default(uuid())
+  userId      String   // ID de l'utilisateur qui a exécuté la commande
+  user        User     @relation(fields: [userId], references: [discordId])
+  commandName String   // Nom de la commande (ex: "daily", "transfer", "generate")
+  commandType String   // Type de commande ("slash" ou "prefix")
+  channelId   String   // ID du canal où la commande a été exécutée
+  guildId     String?  // ID du serveur (optionnel pour les DMs)
+  args        String?  // Arguments de la commande (JSON stringifié)
+  success     Boolean  // Si la commande s'est bien exécutée
+  error       String?  // Message d'erreur si échec
+  executionTime Int?   // Temps d'exécution en millisecondes
+  createdAt   DateTime @default(now())
+}
+
+model ReactionLog {
+  id          String   @id @default(uuid())
+  userId      String   // ID de l'utilisateur qui a réagi
+  user        User     @relation(fields: [userId], references: [discordId])
+  messageId   String   // ID du message réagi
+  channelId   String   // ID du canal
+  guildId     String?  // ID du serveur
+  emoji       String   // Émoji utilisé
+  action      String   // "add" ou "remove"
+  isOOTD      Boolean  @default(false) // Si c'est une réaction OOTD
+  ootdAuthorId String? // ID de l'auteur du message OOTD si applicable
+  tokensEarned Int?    // Tokens gagnés/perdus si applicable
+  createdAt   DateTime @default(now())
 }

@@ -343,6 +343,62 @@ export class DatabaseManager {
         }
     }
 
+    // Supprimer une réaction OOTD
+    static async removeOOTDReaction(messageId: string, authorId: string, reactorId: string) {
+        try {
+            // Vérifier que l'auteur et le réacteur ont des comptes
+            const author = await this.getUser(authorId);
+            const reactor = await this.getUser(reactorId);
+            
+            if (!author) {
+                throw new Error('Auteur du message OOTD non trouvé');
+            }
+            
+            if (!reactor) {
+                throw new Error('Utilisateur qui retire sa réaction non trouvé');
+            }
+
+            // Vérifier si cette réaction existe
+            const existingReaction = await prisma.oOTDReaction.findUnique({
+                where: {
+                    messageId_reactorId: {
+                        messageId,
+                        reactorId
+                    }
+                }
+            });
+
+            if (!existingReaction) {
+                throw new Error('Cette réaction n\'existe pas');
+            }
+
+            // Supprimer la réaction
+            await prisma.oOTDReaction.delete({
+                where: {
+                    messageId_reactorId: {
+                        messageId,
+                        reactorId
+                    }
+                }
+            });
+
+            // Compter le nombre total de réactions uniques pour ce message
+            const reactionCount = await prisma.oOTDReaction.count({
+                where: { messageId }
+            });
+
+            return {
+                reactionCount,
+                authorUsername: author.username,
+                reactorUsername: reactor.username
+            };
+
+        } catch (error) {
+            console.error('Erreur lors de la suppression de la réaction OOTD:', error);
+            throw error;
+        }
+    }
+
     // Récupérer les statistiques OOTD d'un utilisateur
     static async getOOTDStats(discordId: string) {
         try {
