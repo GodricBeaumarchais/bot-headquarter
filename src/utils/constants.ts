@@ -10,7 +10,7 @@ export const BOT_PREFIX = '!hq';
 
 // Récompenses
 export const DAILY_REWARD = 1;
-export const STARTING_BALANCE = 0;
+export const STARTING_BALANCE = 5;
 export const STREAK_BONUS = 5; // Bonus tous les 5 jours
 
 // Configuration OOTD (Outfit of the Day)
