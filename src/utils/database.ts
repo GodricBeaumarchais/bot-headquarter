@@ -1,5 +1,5 @@
 import { PrismaClient } from '../../generated/prisma';
-import { CURRENCY_NAME } from './constants';
+import { CURRENCY_NAME, STARTING_BALANCE} from './constants';
 
 const prisma = new PrismaClient();
 
@@ -22,7 +22,7 @@ export class DatabaseManager {
                 create: {
                     discordId,
                     username,
-                    token: 0,
+                    token: STARTING_BALANCE,
                     streak: 0,
                     role: {
                         connect: {
