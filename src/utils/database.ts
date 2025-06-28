@@ -173,7 +173,7 @@ export class DatabaseManager {
                 data: {
                     discordId,
                     username,
-                    token: 0,
+                    token: STARTING_BALANCE,
                     streak: 0,
                     role: {
                         connect: {
