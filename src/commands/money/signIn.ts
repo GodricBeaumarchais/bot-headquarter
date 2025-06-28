@@ -19,7 +19,7 @@ export const execute: Command['execute'] = async (interaction: ChatInputCommandI
             .setTitle('🎉 Compte créé avec succès !')
             .setDescription(`Bienvenue **${interaction.user.username}** !`)
             .addFields(
-                { name: '💰 Tokens de départ', value: '0 tokens', inline: true },
+                { name: '💰 Tokens de départ', value: '5 tokens', inline: true },
                 { name: '🆔 ID Discord', value: interaction.user.id, inline: true },
                 { name: '📅 Date de création', value: user.createdAt.toLocaleDateString('fr-FR'), inline: true }
             )
