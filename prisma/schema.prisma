@@ -16,6 +16,8 @@ model User {
   id            String    @id @default(uuid())
   discordId     String    @unique
   username      String
+  avatar        String?   // Hash de l'avatar Discord
+  discriminator String?   // Discriminateur Discord (ancien système)
   token         Int       @default(0)
   streak        Int       @default(0)
   lastDailyDate DateTime?
