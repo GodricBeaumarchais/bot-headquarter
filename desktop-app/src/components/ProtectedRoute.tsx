@@ -2,33 +2,43 @@
 
 import { useAuth } from '../contexts/AuthContext';
 import { useRouter } from 'next/navigation';
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
+import Loader from './Loader';
 
 interface ProtectedRouteProps {
   children: React.ReactNode;
 }
 
 export const ProtectedRoute: React.FC<ProtectedRouteProps> = ({ children }) => {
-  const { isAuthenticated, isLoading } = useAuth();
+  const { isAuthenticated, isLoading, error } = useAuth();
   const router = useRouter();
+  const [hasRedirected, setHasRedirected] = useState(false);
 
   useEffect(() => {
-    if (!isLoading && !isAuthenticated) {
+    console.log('🛡️ ProtectedRoute - État:', { 
+      isAuthenticated, 
+      isLoading, 
+      error, 
+      hasRedirected 
+    });
+
+    if (!isLoading && !isAuthenticated && !hasRedirected) {
+      console.log('🔄 Redirection vers la page de connexion...');
+      setHasRedirected(true);
       router.push('/login');
     }
-  }, [isAuthenticated, isLoading, router]);
+  }, [isAuthenticated, isLoading, router, hasRedirected, error]);
 
   if (isLoading) {
-    return (
-      <div className="min-h-screen flex items-center justify-center bg-gray-900">
-        <div className="text-white text-xl">Chargement...</div>
-      </div>
-    );
+    console.log('⏳ Affichage du loader...');
+    return <Loader />;
   }
 
   if (!isAuthenticated) {
+    console.log('❌ Non authentifié, redirection...');
     return null; // Sera redirigé vers /login
   }
 
+  console.log('✅ Authentifié, affichage du contenu');
   return <>{children}</>;
 }; 

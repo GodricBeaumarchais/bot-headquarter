@@ -1,0 +1,25 @@
+# Configuration de l'API pour Bot Headquarters
+# Copiez ce contenu dans votre fichier .env.local
+
+# URL de votre backend API
+# Remplacez par l'URL de votre serveur backend
+NEXT_PUBLIC_API_URL=http://localhost:3001
+
+# Si votre backend tourne sur un autre port, changez le port ici
+# Exemples:
+# NEXT_PUBLIC_API_URL=http://localhost:3000
+# NEXT_PUBLIC_API_URL=http://127.0.0.1:3001
+# NEXT_PUBLIC_API_URL=http://192.168.1.100:3001
+
+# Mode de développement
+NODE_ENV=development
+
+# Configuration pour la production (décommentez si nécessaire)
+# NEXT_PUBLIC_API_URL=https://votre-domaine.com
+# NODE_ENV=production
+
+# Notes importantes:
+# - NEXT_PUBLIC_* permet d'exposer la variable au navigateur
+# - Assurez-vous que votre backend est démarré sur le bon port
+# - Vérifiez que CORS est configuré côté backend pour autoriser http://localhost:3000
+# - Redémarrez votre serveur Next.js après modification du .env.local 

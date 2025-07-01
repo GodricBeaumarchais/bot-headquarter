@@ -3,6 +3,26 @@
 import { ProtectedRoute } from '../components/ProtectedRoute';
 import { useAuth } from '../contexts/AuthContext';
 
+interface App {
+  id: string;
+  name: string;
+  description: string;
+  icon: string;
+  color: string;
+  href: string;
+}
+
+const apps: App[] = [
+  {
+    id: 'banque',
+    name: 'Banque',
+    description: 'Gestion des finances et transactions',
+    icon: '🏦',
+    color: 'bg-green-600',
+    href: '/apps/banque'
+  }
+];
+
 export default function HomePage() {
   const { user, logout } = useAuth();
 
@@ -48,64 +68,56 @@ export default function HomePage() {
 
         {/* Main Content */}
         <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-          <div className="bg-gray-800 rounded-lg shadow-xl p-8">
-            <div className="text-center mb-8">
-              <h2 className="text-3xl font-bold text-white mb-4">
-                Bienvenue, {user?.username} ! 🎉
-              </h2>
-              <p className="text-gray-400 text-lg">
-                Vous êtes maintenant connecté avec votre compte Discord
-              </p>
-            </div>
-
-            {/* User Info Card */}
-            <div className="bg-gray-700 rounded-lg p-6 mb-6">
-              <h3 className="text-xl font-semibold text-white mb-4">
-                Informations de votre compte
-              </h3>
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div className="space-y-3">
-                  <div>
-                    <label className="text-gray-400 text-sm">Nom d'utilisateur</label>
-                    <p className="text-white font-medium">{user?.username}</p>
-                  </div>
-                  <div>
-                    <label className="text-gray-400 text-sm">Discord ID</label>
-                    <p className="text-white font-mono text-sm">{user?.discordId}</p>
-                  </div>
-                  {user?.discriminator && (
-                    <div>
-                      <label className="text-gray-400 text-sm">Discriminateur</label>
-                      <p className="text-white font-medium">#{user.discriminator}</p>
-                    </div>
-                  )}
-                </div>
-                <div className="space-y-3">
-                  <div>
-                    <label className="text-gray-400 text-sm">Rôle</label>
-                    <p className="text-white font-medium">{user?.role?.name}</p>
-                  </div>
-                  <div>
-                    <label className="text-gray-400 text-sm">Rôle Discord ID</label>
-                    <p className="text-white font-mono text-sm">{user?.role?.discordId}</p>
-                  </div>
-                </div>
-              </div>
-            </div>
-
-            {/* Status Card */}
-            <div className="bg-green-900/20 border border-green-500/20 rounded-lg p-6">
-              <div className="flex items-center space-x-3">
-                <div className="w-3 h-3 bg-green-500 rounded-full animate-pulse"></div>
-                <span className="text-green-400 font-medium">
-                  Statut : Connecté et authentifié
-                </span>
-              </div>
-              <p className="text-gray-400 mt-2">
-                Votre session est active et sécurisée. Vous avez accès à toutes les fonctionnalités.
-              </p>
-            </div>
+          {/* Welcome Section */}
+          <div className="mb-8">
+            <h2 className="text-3xl font-bold text-white mb-2">
+              Bienvenue, {user?.username} ! 🎉
+            </h2>
+            <p className="text-gray-400 text-lg">
+              Sélectionnez une application pour commencer
+            </p>
           </div>
+
+          {/* Apps Grid */}
+          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-6">
+            {apps.map((app) => (
+              <div
+                key={app.id}
+                className="group cursor-pointer"
+                onClick={() => window.location.href = app.href}
+              >
+                <div className={`
+                  w-[200px] h-[200px] ${app.color} rounded-xl shadow-lg 
+                  flex flex-col items-center justify-center 
+                  transition-all duration-300 transform group-hover:scale-105 group-hover:shadow-xl
+                  hover:shadow-2xl
+                `}>
+                  <div className="text-6xl mb-4">
+                    {app.icon}
+                  </div>
+                  <h3 className="text-white font-bold text-lg text-center">
+                    {app.name}
+                  </h3>
+                  <p className="text-white/80 text-sm text-center mt-2 px-4">
+                    {app.description}
+                  </p>
+                </div>
+              </div>
+            ))}
+          </div>
+
+          {/* Empty State */}
+          {apps.length === 0 && (
+            <div className="text-center py-12">
+              <div className="text-6xl mb-4">📱</div>
+              <h3 className="text-xl font-semibold text-white mb-2">
+                Aucune application disponible
+              </h3>
+              <p className="text-gray-400">
+                Les applications seront ajoutées prochainement
+              </p>
+            </div>
+          )}
         </main>
       </div>
     </ProtectedRoute>
