@@ -1,4 +1,4 @@
-import { PrismaClient } from '../../generated/prisma';
+import { PrismaClient } from '../../../generated/prisma';
 import { CURRENCY_NAME, STARTING_BALANCE} from './constants';
 
 const prisma = new PrismaClient();
