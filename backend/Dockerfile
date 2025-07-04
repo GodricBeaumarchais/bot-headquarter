@@ -12,7 +12,7 @@ RUN npx prisma generate
 FROM node:20-alpine As builder
 WORKDIR /app
 COPY --from=deps /app/node_modules ./node_modules
-COPY --from=prisma /app/node_modules/.prisma ./node_modules/.prisma
+COPY --from=prisma /app/generate ./generate
 WORKDIR /app/backend
 COPY backend/src ./src
 COPY backend/tsconfig.json ./tsconfig.json
