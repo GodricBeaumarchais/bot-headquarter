@@ -13,11 +13,12 @@ FROM node:20-alpine As builder
 WORKDIR /app
 COPY --from=deps /app/node_modules ./node_modules
 COPY --from=prisma /app/node_modules/.prisma ./node_modules/.prisma
-COPY backend/src ./backend/src
-COPY backend/tsconfig.json ./backend/tsconfig.json
-COPY backend/tsconfig.build.json ./backend/tsconfig.build.json
-COPY backend/nest-cli.json ./backend/nest-cli.json
-COPY backend/package.json ./backend/package.json
+WORKDIR /app/backend
+COPY backend/src ./src
+COPY backend/tsconfig.json ./tsconfig.json
+COPY backend/tsconfig.build.json ./tsconfig.build.json
+COPY backend/nest-cli.json ./nest-cli.json
+COPY backend/package.json ./package.json
 RUN npm run build
 
 FROM node:20-alpine As runner
