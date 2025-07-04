@@ -550,7 +550,7 @@ export class DatabaseManager {
     }
 
     // Méthodes pour le système de chifumi
-    static async createChifumiGame(challengerId: string, opponentId: string, betAmount: number) {
+    static async createChifumiGame(challengerId: string, opponentId: string, betAmount: number, totalRounds: number = 3) {
         try {
             // Générer un ID court unique pour le jeu
             const gameId = this.generateGameId();
@@ -559,19 +559,22 @@ export class DatabaseManager {
             const expiresAt = new Date();
             expiresAt.setHours(expiresAt.getHours() + 24);
 
+            // Créer les manches dynamiquement
+            const rounds = [];
+            for (let i = 1; i <= totalRounds; i++) {
+                rounds.push({ roundNumber: i });
+            }
+
             const game = await prisma.chifumiGame.create({
                 data: {
                     gameId,
                     challengerId,
                     opponentId,
                     betAmount,
+                    totalRounds,
                     expiresAt,
                     rounds: {
-                        create: [
-                            { roundNumber: 1 },
-                            { roundNumber: 2 },
-                            { roundNumber: 3 }
-                        ]
+                        create: rounds
                     }
                 },
                 include: {
@@ -715,8 +718,16 @@ export class DatabaseManager {
                     data: { winnerId: winner }
                 });
 
-                // Vérifier si le jeu est terminé
-                await this.checkGameCompletion(gameId);
+                // Annoncer le résultat de la manche
+                await this.announceRoundResult(gameId, updatedRound.roundNumber, winner);
+
+                // Si c'est une égalité, créer une nouvelle manche
+                if (winner === null) {
+                    await this.createTiebreakerRound(gameId);
+                } else {
+                    // Vérifier si le jeu est terminé
+                    await this.checkGameCompletion(gameId);
+                }
             }
 
             return updatedRound;
@@ -763,9 +774,12 @@ export class DatabaseManager {
                 }
             }
 
-            // Vérifier si un joueur a gagné 2 manches
-            if (challengerWins >= 2 || opponentWins >= 2) {
-                const winnerId = challengerWins >= 2 ? game.challengerId : game.opponentId;
+            // Calculer le nombre de victoires nécessaires (majorité)
+            const requiredWins = Math.ceil(game.totalRounds / 2);
+
+            // Vérifier si un joueur a gagné suffisamment de manches
+            if (challengerWins >= requiredWins || opponentWins >= requiredWins) {
+                const winnerId = challengerWins >= requiredWins ? game.challengerId : game.opponentId;
                 await this.finishChifumiGame(gameId, winnerId);
             }
         } catch (error) {
@@ -806,8 +820,97 @@ export class DatabaseManager {
         }
     }
 
-    // Annoncer le résultat du jeu
-    private static async announceGameResult(game: any, winnerId: string) {
+    // Annoncer le résultat d'une manche
+    private static async announceRoundResult(gameId: string, roundNumber: number, winnerId: string | null) {
+        try {
+            const game = await this.getChifumiGame(gameId);
+            if (!game) return;
+
+            const challengerChoice = game.rounds.find(r => r.roundNumber === roundNumber)?.challengerChoice;
+            const opponentChoice = game.rounds.find(r => r.roundNumber === roundNumber)?.opponentChoice;
+
+            if (!challengerChoice || !opponentChoice) return;
+
+            const choiceEmojis = {
+                'ROCK': '🪨',
+                'PAPER': '📄',
+                'SCISSORS': '✂️'
+            };
+
+            const challengerName = game.challenger.username;
+            const opponentName = game.opponent.username;
+
+            let resultMessage = '';
+            let isTie = false;
+            
+            if (winnerId === null) {
+                isTie = true;
+                resultMessage = `🤝 **Manche ${roundNumber} - Égalité !**\n${challengerName} ${choiceEmojis[challengerChoice]} vs ${choiceEmojis[opponentChoice]} ${opponentName}`;
+            } else {
+                const winner = winnerId === game.challengerId ? challengerName : opponentName;
+                const loser = winnerId === game.challengerId ? opponentName : challengerName;
+                const winnerChoice = winnerId === game.challengerId ? challengerChoice : opponentChoice;
+                const loserChoice = winnerId === game.challengerId ? opponentChoice : challengerChoice;
+                
+                resultMessage = `🎯 **Manche ${roundNumber} - ${winner} gagne !**\n${winner} ${choiceEmojis[winnerChoice]} bat ${choiceEmojis[loserChoice]} ${loser}`;
+            }
+
+            // Calculer le score actuel
+            let challengerWins = 0;
+            let opponentWins = 0;
+            
+            game.rounds.forEach(round => {
+                if (round.winnerId === game.challengerId) {
+                    challengerWins++;
+                } else if (round.winnerId === game.opponentId) {
+                    opponentWins++;
+                }
+            });
+
+            resultMessage += `\n\n📊 **Score actuel :** ${challengerName} ${challengerWins} - ${opponentWins} ${opponentName}`;
+
+            // Ajouter un message spécial pour les égalités
+            if (isTie) {
+                resultMessage += `\n\n🔄 **Une manche de départage va être créée !**`;
+            }
+
+            // Envoyer le message dans le canal principal
+            await this.sendGameMessage(gameId, resultMessage);
+
+        } catch (error) {
+            console.error('Erreur lors de l\'annonce du résultat de manche:', error);
+        }
+    }
+
+    // Créer une manche de départage en cas d'égalité
+    private static async createTiebreakerRound(gameId: string) {
+        try {
+            const game = await this.getChifumiGame(gameId);
+            if (!game) return;
+
+            // Trouver le numéro de manche le plus élevé
+            const maxRoundNumber = Math.max(...game.rounds.map(round => round.roundNumber));
+            const newRoundNumber = maxRoundNumber + 1;
+
+            // Créer une nouvelle manche
+            await prisma.chifumiRound.create({
+                data: {
+                    gameId: game.id,
+                    roundNumber: newRoundNumber
+                }
+            });
+
+            // Envoyer un message d'annonce de la manche de départage
+            const tiebreakerMessage = `🤝 **Égalité ! Manche de départage ${newRoundNumber}**\n\nLes joueurs doivent rejouer pour départager cette manche.`;
+            await this.sendGameMessage(gameId, tiebreakerMessage);
+
+        } catch (error) {
+            console.error('Erreur lors de la création de la manche de départage:', error);
+        }
+    }
+
+    // Envoyer un message de jeu dans le canal principal
+    private static async sendGameMessage(gameId: string, message: string) {
         try {
             const mainChannelId = process.env.BOT_MAIN_CHANNEL;
             if (!mainChannelId) {
@@ -815,35 +918,26 @@ export class DatabaseManager {
                 return;
             }
 
+            // Note: Cette fonction nécessiterait l'accès au client Discord
+            // Pour l'instant, on log le message avec un formatage amélioré
+            console.log(`\n🎮 [Jeu ${gameId}] ${message}\n`);
+
+        } catch (error) {
+            console.error('Erreur lors de l\'envoi du message de jeu:', error);
+        }
+    }
+
+    // Annoncer le résultat du jeu
+    private static async announceGameResult(game: any, winnerId: string) {
+        try {
             const winner = winnerId === game.challengerId ? game.challenger : game.opponent;
             const loser = winnerId === game.challengerId ? game.opponent : game.challenger;
             const totalWinnings = game.betAmount * 2;
 
-            const embed = {
-                color: 0xFFD700,
-                title: '🏆 Victoire au Chifumi !',
-                description: `${winner.username} a remporté la partie contre ${loser.username} !`,
-                fields: [
-                    {
-                        name: '💰 Gains',
-                        value: `${winner.username} remporte **${totalWinnings} ${CURRENCY_NAME}** !`,
-                        inline: true
-                    },
-                    {
-                        name: '🎮 Manches jouées',
-                        value: `${game.rounds.length} manches`,
-                        inline: true
-                    }
-                ],
-                footer: {
-                    text: `ID de jeu: ${game.gameId}`
-                },
-                timestamp: new Date().toISOString()
-            };
+            const resultMessage = `🏆 **Victoire au Chifumi !**\n\n🎉 ${winner.username} a remporté la partie contre ${loser.username} !\n\n💰 **Gains :** ${winner.username} remporte **${totalWinnings} ${CURRENCY_NAME}** !\n🎮 **Manches jouées :** ${game.totalRounds} manches\n\n📊 **Score final :** ${winner.username} vs ${loser.username}`;
 
-            // Note: Cette fonction nécessiterait l'accès au client Discord
-            // Pour l'instant, on log le message
-            console.log(`🏆 ${winner.username} a gagné ${totalWinnings} ${CURRENCY_NAME} contre ${loser.username} !`);
+            // Envoyer le message dans le canal principal
+            await this.sendGameMessage(game.gameId, resultMessage);
 
         } catch (error) {
             console.error('Erreur lors de l\'annonce du résultat:', error);

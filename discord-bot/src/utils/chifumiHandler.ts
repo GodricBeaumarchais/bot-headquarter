@@ -45,6 +45,18 @@ export async function handleChifumiAccept(interaction: ButtonInteraction, gameId
         // Activer le jeu
         await DatabaseManager.activateChifumiGame(gameId);
 
+        // Calculer le score actuel
+        let challengerWins = 0;
+        let opponentWins = 0;
+        
+        game.rounds.forEach((round: any) => {
+            if (round.winnerId === game.challengerId) {
+                challengerWins++;
+            } else if (round.winnerId === game.opponentId) {
+                opponentWins++;
+            }
+        });
+
         // Créer l'embed de jeu actif
         const embed = new EmbedBuilder()
             .setColor(0x00FF00)
@@ -52,10 +64,10 @@ export async function handleChifumiAccept(interaction: ButtonInteraction, gameId
             .setDescription(`${game.challenger.username} vs ${game.opponent.username}`)
             .addFields(
                 { name: '💰 Mise', value: `${game.betAmount} ${CURRENCY_NAME}`, inline: true },
-                { name: '🎯 Manche', value: `${game.currentRound}/3`, inline: true },
-                { name: '📊 Score', value: '0 - 0', inline: true }
+                { name: '🎯 Manche', value: `${game.currentRound}/${game.totalRounds}`, inline: true },
+                { name: '📊 Score', value: `${challengerWins} - ${opponentWins}`, inline: true }
             )
-            .setFooter({ text: `ID: ${game.gameId}` })
+            .setFooter({ text: `ID: ${game.gameId} | Premier à ${Math.ceil(game.totalRounds/2)} victoires` })
             .setTimestamp();
 
         // Créer les boutons pour les choix
@@ -231,7 +243,7 @@ export async function handleChifumiChoice(interaction: ButtonInteraction, gameId
             
             if (updatedRound && updatedRound.challengerChoice && updatedRound.opponentChoice) {
                 // Les deux joueurs ont fait leur choix, mettre à jour l'embed
-                await updateGameEmbed(interaction, updatedGame);
+                await updateGameEmbed(interaction, updatedGame, updatedRound);
             }
         }
 
@@ -244,7 +256,7 @@ export async function handleChifumiChoice(interaction: ButtonInteraction, gameId
     }
 }
 
-async function updateGameEmbed(interaction: ButtonInteraction, game: any) {
+async function updateGameEmbed(interaction: ButtonInteraction, game: any, lastRound?: any) {
     try {
         // Calculer le score
         let challengerWins = 0;
@@ -263,16 +275,36 @@ async function updateGameEmbed(interaction: ButtonInteraction, game: any) {
             !round.challengerChoice || !round.opponentChoice
         );
 
+        // Déterminer la couleur et le titre selon le résultat de la dernière manche
+        let embedColor = 0x00FF00; // Vert par défaut
+        let embedTitle = '🎮 Partie de Chifumi en cours !';
+        let embedDescription = `${game.challenger.username} vs ${game.opponent.username}`;
+
+        if (lastRound && lastRound.challengerChoice && lastRound.opponentChoice) {
+            if (lastRound.winnerId === null) {
+                // Égalité
+                embedColor = 0xFFA500; // Orange
+                embedTitle = '🤝 Égalité ! Manche de départage';
+                embedDescription = `${game.challenger.username} vs ${game.opponent.username}\n\n🔄 Une manche de départage va être créée !`;
+            } else {
+                // Victoire
+                const winner = lastRound.winnerId === game.challengerId ? game.challenger.username : game.opponent.username;
+                embedColor = 0x00FF00; // Vert
+                embedTitle = `🎯 Manche ${lastRound.roundNumber} terminée !`;
+                embedDescription = `${game.challenger.username} vs ${game.opponent.username}\n\n🏆 ${winner} remporte cette manche !`;
+            }
+        }
+
         const embed = new EmbedBuilder()
-            .setColor(0x00FF00)
-            .setTitle('🎮 Partie de Chifumi en cours !')
-            .setDescription(`${game.challenger.username} vs ${game.opponent.username}`)
+            .setColor(embedColor)
+            .setTitle(embedTitle)
+            .setDescription(embedDescription)
             .addFields(
                 { name: '💰 Mise', value: `${game.betAmount} ${CURRENCY_NAME}`, inline: true },
-                { name: '🎯 Manche', value: currentRound ? `${currentRound.roundNumber}/3` : '3/3', inline: true },
+                { name: '🎯 Manche', value: currentRound ? `${currentRound.roundNumber}/${game.totalRounds}` : `${game.totalRounds}/${game.totalRounds}`, inline: true },
                 { name: '📊 Score', value: `${challengerWins} - ${opponentWins}`, inline: true }
             )
-            .setFooter({ text: `ID: ${game.gameId}` })
+            .setFooter({ text: `ID: ${game.gameId} | Premier à ${Math.ceil(game.totalRounds/2)} victoires` })
             .setTimestamp();
 
         // Si le jeu est terminé, ne plus afficher les boutons

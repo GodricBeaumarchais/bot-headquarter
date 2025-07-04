@@ -50,7 +50,7 @@ model OOTDReaction {
   authorId    String   // ID de l'auteur du message OOTD
   reactorId   String   // ID de celui qui a réagi
   createdAt   DateTime @default(now())
-  author      User     @relation(fields: [authorId], references: [discordId])
+  author      User     @relation(fields: [authorId], references: [discordId], onDelete: Cascade)
   
   @@unique([messageId, reactorId])
 }
@@ -58,7 +58,7 @@ model OOTDReaction {
 model CommandLog {
   id          String   @id @default(uuid())
   userId      String   // ID de l'utilisateur qui a exécuté la commande
-  user        User     @relation(fields: [userId], references: [discordId])
+  user        User     @relation(fields: [userId], references: [discordId], onDelete: Cascade)
   commandName String   // Nom de la commande (ex: "daily", "transfer", "generate")
   commandType String   // Type de commande ("slash" ou "prefix")
   channelId   String   // ID du canal où la commande a été exécutée
@@ -73,7 +73,7 @@ model CommandLog {
 model ReactionLog {
   id          String   @id @default(uuid())
   userId      String   // ID de l'utilisateur qui a réagi
-  user        User     @relation(fields: [userId], references: [discordId])
+  user        User     @relation(fields: [userId], references: [discordId], onDelete: Cascade)
   messageId   String   // ID du message réagi
   channelId   String   // ID du canal
   guildId     String?  // ID du serveur
@@ -93,13 +93,13 @@ model ChifumiGame {
   id          String   @id @default(uuid())
   gameId      String   @unique // ID court pour les liens (ex: "abc123")
   challengerId String  // ID du joueur qui défie
-  challenger  User     @relation("ChifumiChallenger", fields: [challengerId], references: [discordId])
+  challenger  User     @relation("ChifumiChallenger", fields: [challengerId], references: [discordId], onDelete: Cascade)
   opponentId  String   // ID du joueur défié
-  opponent    User     @relation("ChifumiOpponent", fields: [opponentId], references: [discordId])
+  opponent    User     @relation("ChifumiOpponent", fields: [opponentId], references: [discordId], onDelete: Cascade)
   betAmount   Int      // Montant de la mise en tokens
   status      ChifumiGameStatus @default(PENDING) // PENDING, ACTIVE, FINISHED, CANCELLED
   winnerId    String?  // ID du gagnant final
-  winner      User?    @relation("ChifumiWinner", fields: [winnerId], references: [discordId])
+  winner      User?    @relation("ChifumiWinner", fields: [winnerId], references: [discordId], onDelete: SetNull)
   currentRound Int     @default(1) // Manche actuelle
   totalRounds Int      @default(3) // Nombre total de manches
   rounds      ChifumiRound[]
@@ -116,7 +116,7 @@ model ChifumiRound {
   challengerChoice ChifumiChoice? // Choix du challenger
   opponentChoice   ChifumiChoice? // Choix de l'opposant
   winnerId    String?  // ID du gagnant de cette manche
-  winner      User?    @relation("ChifumiRoundWinner", fields: [winnerId], references: [discordId])
+  winner      User?    @relation("ChifumiRoundWinner", fields: [winnerId], references: [discordId], onDelete: SetNull)
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
   

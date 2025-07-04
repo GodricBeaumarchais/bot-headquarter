@@ -6,6 +6,7 @@ import {
     CURRENCY_NAME, 
     COIN_EMOTE, 
     DAILY_REWARD,
+    STARTING_BALANCE,
     OOTD_CHANNEL_ID,
     OOTD_REACTIONS_NEEDED,
     OOTD_REWARD,
@@ -183,7 +184,7 @@ export class PrefixCommandHandler {
                 message.author.username
             );
             
-            await message.reply(`🎉 **Compte créé avec succès !**\nBienvenue **${message.author.username}** !\n${COIN_EMOTE} **${CURRENCY_NAME} de départ :** 0 ${CURRENCY_NAME}\n📅 **Date de création :** ${user.createdAt.toLocaleDateString('fr-FR')}`);
+            await message.reply(`🎉 **Compte créé avec succès !**\nBienvenue **${message.author.username}** !\n${COIN_EMOTE} **${CURRENCY_NAME} de départ :** ${STARTING_BALANCE} ${CURRENCY_NAME}\n📅 **Date de création :** ${user.createdAt.toLocaleDateString('fr-FR')}`);
         } catch (error) {
             if (error instanceof Error && error.message === 'Utilisateur déjà existant') {
                 await message.reply(`❌ Vous avez déjà un compte ! Utilisez \`${this.prefix} balance\` pour voir votre solde.`);
@@ -588,7 +589,7 @@ export class PrefixCommandHandler {
     }
     
     private async handleHelp(message: Message): Promise<void> {
-        const helpText = `🤖 **Commandes disponibles :**\n\n**💰 Système de ${CURRENCY_NAME} :**\n\`${this.prefix} signin\` - Créer votre compte (0 ${CURRENCY_NAME} de départ)\n\`${this.prefix} balance [@utilisateur]\` - Voir votre solde de ${CURRENCY_NAME}\n\`${this.prefix} daily\` - Récupérer votre récompense quotidienne (${DAILY_REWARD} ${CURRENCY_NAME})\n\`${this.prefix} transfer @utilisateur montant\` - Transférer des ${CURRENCY_NAME}\n\`${this.prefix} leaderboard [limite]\` - Voir le classement des joueurs\n\`${this.prefix} streak\` - Voir votre streak\n\n**🎮 Jeux :**\n\`${this.prefix} chifumi @joueur nombre_token_mise\` - Défier un joueur au Pierre-Papier-Ciseaux\n\n**👑 Commandes Admin :**\n\`${this.prefix} generate @utilisateur montant\` - Générer des ${CURRENCY_NAME}\n\`${this.prefix} remove @utilisateur montant\` - Retirer des ${CURRENCY_NAME}\n\`${this.prefix} exchange @depuis @vers montant\` - Échanger des ${CURRENCY_NAME}\n\`${this.prefix} logs [stats|commands|reactions|top] [@utilisateur] [limite]\` - Gestion des logs\n\n**📝 Exemples :**\n\`${this.prefix} signin\`\n\`${this.prefix} balance @utilisateur\`\n\`${this.prefix} transfer @utilisateur 50\`\n\`${this.prefix} chifumi @utilisateur 25\`\n\`${this.prefix} leaderboard 5\`\n\`${this.prefix} generate @utilisateur 100\`\n\`${this.prefix} remove @utilisateur 50\`\n\`${this.prefix} exchange @user1 @user2 25\`\n\`${this.prefix} logs stats\`\n\`${this.prefix} logs commands @utilisateur 20\`\n\`${this.prefix} logs top commands 5\``;
+        const helpText = `🤖 **Commandes disponibles :**\n\n**💰 Système de ${CURRENCY_NAME} :**\n\`${this.prefix} signin\` - Créer votre compte (0 ${CURRENCY_NAME} de départ)\n\`${this.prefix} balance [@utilisateur]\` - Voir votre solde de ${CURRENCY_NAME}\n\`${this.prefix} daily\` - Récupérer votre récompense quotidienne (${DAILY_REWARD} ${CURRENCY_NAME})\n\`${this.prefix} transfer @utilisateur montant\` - Transférer des ${CURRENCY_NAME}\n\`${this.prefix} leaderboard [limite]\` - Voir le classement des joueurs\n\`${this.prefix} streak\` - Voir votre streak\n\n**🎮 Jeux :**\n\`${this.prefix} chifumi @joueur nombre_token_mise [nombre_manches]\` - Défier un joueur au Pierre-Papier-Ciseaux (3, 5, 7, 9, 11 manches)\n\n**👑 Commandes Admin :**\n\`${this.prefix} generate @utilisateur montant\` - Générer des ${CURRENCY_NAME}\n\`${this.prefix} remove @utilisateur montant\` - Retirer des ${CURRENCY_NAME}\n\`${this.prefix} exchange @depuis @vers montant\` - Échanger des ${CURRENCY_NAME}\n\`${this.prefix} logs [stats|commands|reactions|top] [@utilisateur] [limite]\` - Gestion des logs\n\n**📝 Exemples :**\n\`${this.prefix} signin\`\n\`${this.prefix} balance @utilisateur\`\n\`${this.prefix} transfer @utilisateur 50\`\n\`${this.prefix} chifumi @utilisateur 25\`\n\`${this.prefix} chifumi @utilisateur 25 5\`\n\`${this.prefix} leaderboard 5\`\n\`${this.prefix} generate @utilisateur 100\`\n\`${this.prefix} remove @utilisateur 50\`\n\`${this.prefix} exchange @user1 @user2 25\`\n\`${this.prefix} logs stats\`\n\`${this.prefix} logs commands @utilisateur 20\`\n\`${this.prefix} logs top commands 5\``;
         await message.reply(helpText);
     }
 
@@ -755,12 +756,19 @@ export class PrefixCommandHandler {
 
     private async handleChifumi(message: Message, args: string[]): Promise<void> {
         try {
-            // Vérifier les arguments : !hq chifumi @joueur nombre_token_mise
+            // Vérifier les arguments : !hq chifumi @joueur nombre_token_mise [nombre_manches]
             const targetUser = message.mentions.users.first();
             const betAmount = parseInt(args[1]);
+            const totalRounds = parseInt(args[2]) || 3; // Par défaut 3 manches
 
             if (!targetUser || !betAmount || betAmount <= 0) {
-                await message.reply(`❌ Usage : \`${this.prefix} chifumi @joueur nombre_token_mise\``);
+                await message.reply(`❌ Usage : \`${this.prefix} chifumi @joueur nombre_token_mise [nombre_manches]\`\n\n**Exemples :**\n\`${this.prefix} chifumi @joueur 100\` - 3 manches par défaut\n\`${this.prefix} chifumi @joueur 100 5\` - 5 manches\n\`${this.prefix} chifumi @joueur 100 7\` - 7 manches`);
+                return;
+            }
+
+            // Vérifier que le nombre de manches est impair et valide
+            if (totalRounds < 3 || totalRounds > 11 || totalRounds % 2 === 0) {
+                await message.reply(`❌ Le nombre de manches doit être impair entre 3 et 11. Valeurs acceptées : 3, 5, 7, 9, 11`);
                 return;
             }
 
@@ -800,7 +808,8 @@ export class PrefixCommandHandler {
             const game = await DatabaseManager.createChifumiGame(
                 message.author.id,
                 targetUser.id,
-                betAmount
+                betAmount,
+                totalRounds
             );
 
             // Créer l'embed de proposition
@@ -816,7 +825,7 @@ export class PrefixCommandHandler {
                     },
                     {
                         name: '🎯 Manches',
-                        value: '3 manches gagnantes',
+                        value: `${totalRounds} manches (premier à ${Math.ceil(totalRounds/2)} victoires)`,
                         inline: true
                     },
                     {
