@@ -100,6 +100,10 @@ export class PrefixCommandHandler {
                     await this.handleLogs(message, args);
                     success = true;
                     break;
+                case 'chifumi':
+                    await this.handleChifumi(message, args);
+                    success = true;
+                    break;
                 default:
                     await message.reply(`❌ Commande inconnue. Utilisez \`${this.prefix} help\` pour voir les commandes disponibles.`);
                     success = false;
@@ -584,7 +588,7 @@ export class PrefixCommandHandler {
     }
     
     private async handleHelp(message: Message): Promise<void> {
-        const helpText = `🤖 **Commandes disponibles :**\n\n**💰 Système de ${CURRENCY_NAME} :**\n\`${this.prefix} signin\` - Créer votre compte (0 ${CURRENCY_NAME} de départ)\n\`${this.prefix} balance [@utilisateur]\` - Voir votre solde de ${CURRENCY_NAME}\n\`${this.prefix} daily\` - Récupérer votre récompense quotidienne (${DAILY_REWARD} ${CURRENCY_NAME})\n\`${this.prefix} transfer @utilisateur montant\` - Transférer des ${CURRENCY_NAME}\n\`${this.prefix} leaderboard [limite]\` - Voir le classement des joueurs\n\`${this.prefix} streak\` - Voir votre streak\n\n**👑 Commandes Admin :**\n\`${this.prefix} generate @utilisateur montant\` - Générer des ${CURRENCY_NAME}\n\`${this.prefix} remove @utilisateur montant\` - Retirer des ${CURRENCY_NAME}\n\`${this.prefix} exchange @depuis @vers montant\` - Échanger des ${CURRENCY_NAME}\n\`${this.prefix} logs [stats|commands|reactions|top] [@utilisateur] [limite]\` - Gestion des logs\n\n**📝 Exemples :**\n\`${this.prefix} signin\`\n\`${this.prefix} balance @utilisateur\`\n\`${this.prefix} transfer @utilisateur 50\`\n\`${this.prefix} leaderboard 5\`\n\`${this.prefix} generate @utilisateur 100\`\n\`${this.prefix} remove @utilisateur 50\`\n\`${this.prefix} exchange @user1 @user2 25\`\n\`${this.prefix} logs stats\`\n\`${this.prefix} logs commands @utilisateur 20\`\n\`${this.prefix} logs top commands 5\``;
+        const helpText = `🤖 **Commandes disponibles :**\n\n**💰 Système de ${CURRENCY_NAME} :**\n\`${this.prefix} signin\` - Créer votre compte (0 ${CURRENCY_NAME} de départ)\n\`${this.prefix} balance [@utilisateur]\` - Voir votre solde de ${CURRENCY_NAME}\n\`${this.prefix} daily\` - Récupérer votre récompense quotidienne (${DAILY_REWARD} ${CURRENCY_NAME})\n\`${this.prefix} transfer @utilisateur montant\` - Transférer des ${CURRENCY_NAME}\n\`${this.prefix} leaderboard [limite]\` - Voir le classement des joueurs\n\`${this.prefix} streak\` - Voir votre streak\n\n**🎮 Jeux :**\n\`${this.prefix} chifumi @joueur nombre_token_mise\` - Défier un joueur au Pierre-Papier-Ciseaux\n\n**👑 Commandes Admin :**\n\`${this.prefix} generate @utilisateur montant\` - Générer des ${CURRENCY_NAME}\n\`${this.prefix} remove @utilisateur montant\` - Retirer des ${CURRENCY_NAME}\n\`${this.prefix} exchange @depuis @vers montant\` - Échanger des ${CURRENCY_NAME}\n\`${this.prefix} logs [stats|commands|reactions|top] [@utilisateur] [limite]\` - Gestion des logs\n\n**📝 Exemples :**\n\`${this.prefix} signin\`\n\`${this.prefix} balance @utilisateur\`\n\`${this.prefix} transfer @utilisateur 50\`\n\`${this.prefix} chifumi @utilisateur 25\`\n\`${this.prefix} leaderboard 5\`\n\`${this.prefix} generate @utilisateur 100\`\n\`${this.prefix} remove @utilisateur 50\`\n\`${this.prefix} exchange @user1 @user2 25\`\n\`${this.prefix} logs stats\`\n\`${this.prefix} logs commands @utilisateur 20\`\n\`${this.prefix} logs top commands 5\``;
         await message.reply(helpText);
     }
 
@@ -746,6 +750,115 @@ export class PrefixCommandHandler {
 
             default:
                 await message.reply('❌ Type invalide. Utilisez `commands` ou `users`.');
+        }
+    }
+
+    private async handleChifumi(message: Message, args: string[]): Promise<void> {
+        try {
+            // Vérifier les arguments : !hq chifumi @joueur nombre_token_mise
+            const targetUser = message.mentions.users.first();
+            const betAmount = parseInt(args[1]);
+
+            if (!targetUser || !betAmount || betAmount <= 0) {
+                await message.reply(`❌ Usage : \`${this.prefix} chifumi @joueur nombre_token_mise\``);
+                return;
+            }
+
+            // Vérifier que ce n'est pas le même utilisateur
+            if (targetUser.id === message.author.id) {
+                await message.reply('❌ Impossible de se défier soi-même !');
+                return;
+            }
+
+            // Vérifier si les utilisateurs ont des comptes
+            const challenger = await DatabaseManager.getUser(message.author.id);
+            const opponent = await DatabaseManager.getUser(targetUser.id);
+
+            if (!challenger) {
+                await message.reply(`❌ Vous devez d'abord créer un compte avec \`${this.prefix} signin\``);
+                return;
+            }
+
+            if (!opponent) {
+                await message.reply(`❌ ${targetUser.username} n'a pas encore de compte. Utilisez \`${this.prefix} signin\` pour créer un compte.`);
+                return;
+            }
+
+            // Vérifier si le challenger a assez de tokens
+            if (challenger.token < betAmount) {
+                await message.reply(`❌ Vous n'avez que ${challenger.token} ${CURRENCY_NAME}. Impossible de miser ${betAmount} ${CURRENCY_NAME}.`);
+                return;
+            }
+
+            // Vérifier si l'opposant a assez de tokens
+            if (opponent.token < betAmount) {
+                await message.reply(`❌ ${targetUser.username} n'a que ${opponent.token} ${CURRENCY_NAME}. Impossible de miser ${betAmount} ${CURRENCY_NAME}.`);
+                return;
+            }
+
+            // Créer la proposition de jeu
+            const game = await DatabaseManager.createChifumiGame(
+                message.author.id,
+                targetUser.id,
+                betAmount
+            );
+
+            // Créer l'embed de proposition
+            const embed = {
+                color: 0x00FF00,
+                title: '🎮 Défi Chifumi !',
+                description: `${message.author} défie ${targetUser} à une partie de Pierre-Papier-Ciseaux !`,
+                fields: [
+                    {
+                        name: '💰 Mise',
+                        value: `${betAmount} ${CURRENCY_NAME}`,
+                        inline: true
+                    },
+                    {
+                        name: '🎯 Manches',
+                        value: '3 manches gagnantes',
+                        inline: true
+                    },
+                    {
+                        name: '⏰ Expiration',
+                        value: '24 heures',
+                        inline: true
+                    }
+                ],
+                footer: {
+                    text: `ID de jeu: ${game.gameId}`
+                },
+                timestamp: new Date().toISOString()
+            };
+
+            // Ajouter les boutons d'action
+            const row = {
+                type: 1,
+                components: [
+                    {
+                        type: 2,
+                        style: 3, // Green button
+                        label: '✅ Accepter',
+                        custom_id: `chifumi_accept_${game.gameId}`
+                    },
+                    {
+                        type: 2,
+                        style: 4, // Red button
+                        label: '❌ Refuser',
+                        custom_id: `chifumi_decline_${game.gameId}`
+                    }
+                ]
+            };
+
+            await message.reply({
+                content: `${targetUser}`,
+                embeds: [embed],
+                components: [row]
+            });
+
+        } catch (error) {
+            console.error('Erreur lors de la création du défi chifumi:', error);
+            await message.reply('❌ Une erreur s\'est produite lors de la création du défi.');
         }
     }
 } 

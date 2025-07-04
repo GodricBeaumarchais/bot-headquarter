@@ -548,6 +548,307 @@ export class DatabaseManager {
             throw error;
         }
     }
+
+    // Méthodes pour le système de chifumi
+    static async createChifumiGame(challengerId: string, opponentId: string, betAmount: number) {
+        try {
+            // Générer un ID court unique pour le jeu
+            const gameId = this.generateGameId();
+            
+            // Créer la date d'expiration (24h)
+            const expiresAt = new Date();
+            expiresAt.setHours(expiresAt.getHours() + 24);
+
+            const game = await prisma.chifumiGame.create({
+                data: {
+                    gameId,
+                    challengerId,
+                    opponentId,
+                    betAmount,
+                    expiresAt,
+                    rounds: {
+                        create: [
+                            { roundNumber: 1 },
+                            { roundNumber: 2 },
+                            { roundNumber: 3 }
+                        ]
+                    }
+                },
+                include: {
+                    challenger: true,
+                    opponent: true,
+                    rounds: true
+                }
+            });
+
+            console.log(`✅ Nouveau jeu chifumi créé: ${gameId} entre ${game.challenger.username} et ${game.opponent.username}`);
+            return game;
+
+        } catch (error) {
+            console.error('Erreur lors de la création du jeu chifumi:', error);
+            throw error;
+        }
+    }
+
+    static generateGameId(): string {
+        // Générer un ID court de 6 caractères
+        const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789';
+        let result = '';
+        for (let i = 0; i < 6; i++) {
+            result += chars.charAt(Math.floor(Math.random() * chars.length));
+        }
+        return result;
+    }
+
+    // Récupérer un jeu de chifumi par son ID
+    static async getChifumiGame(gameId: string) {
+        try {
+            return await prisma.chifumiGame.findUnique({
+                where: { gameId },
+                include: {
+                    challenger: true,
+                    opponent: true,
+                    winner: true,
+                    rounds: {
+                        orderBy: { roundNumber: 'asc' }
+                    }
+                }
+            });
+        } catch (error) {
+            console.error('Erreur lors de la récupération du jeu chifumi:', error);
+            throw error;
+        }
+    }
+
+    // Activer un jeu de chifumi
+    static async activateChifumiGame(gameId: string) {
+        try {
+            return await prisma.chifumiGame.update({
+                where: { gameId },
+                data: { status: 'ACTIVE' },
+                include: {
+                    challenger: true,
+                    opponent: true,
+                    rounds: true
+                }
+            });
+        } catch (error) {
+            console.error('Erreur lors de l\'activation du jeu chifumi:', error);
+            throw error;
+        }
+    }
+
+    // Annuler un jeu de chifumi
+    static async cancelChifumiGame(gameId: string) {
+        try {
+            return await prisma.chifumiGame.update({
+                where: { gameId },
+                data: { status: 'CANCELLED' },
+                include: {
+                    challenger: true,
+                    opponent: true
+                }
+            });
+        } catch (error) {
+            console.error('Erreur lors de l\'annulation du jeu chifumi:', error);
+            throw error;
+        }
+    }
+
+    // Faire un choix dans une manche
+    static async makeChifumiChoice(gameId: string, userId: string, choice: 'ROCK' | 'PAPER' | 'SCISSORS', roundNumber: number) {
+        try {
+            const game = await this.getChifumiGame(gameId);
+            if (!game) {
+                throw new Error('Jeu non trouvé');
+            }
+
+            if (game.status !== 'ACTIVE') {
+                throw new Error('Jeu non actif');
+            }
+
+            // Déterminer si c'est le challenger ou l'opposant
+            const isChallenger = game.challengerId === userId;
+            const isOpponent = game.opponentId === userId;
+
+            if (!isChallenger && !isOpponent) {
+                throw new Error('Vous ne participez pas à ce jeu');
+            }
+
+            // Mettre à jour le choix dans la manche
+            const updateData = isChallenger 
+                ? { challengerChoice: choice }
+                : { opponentChoice: choice };
+
+            const updatedRound = await prisma.chifumiRound.update({
+                where: {
+                    gameId_roundNumber: {
+                        gameId: game.id,
+                        roundNumber
+                    }
+                },
+                data: updateData,
+                include: {
+                    game: {
+                        include: {
+                            challenger: true,
+                            opponent: true,
+                            rounds: true
+                        }
+                    }
+                }
+            });
+
+            // Vérifier si les deux joueurs ont fait leur choix
+            if (updatedRound.challengerChoice && updatedRound.opponentChoice) {
+                // Déterminer le gagnant de la manche
+                const winner = this.determineRoundWinner(
+                    updatedRound.challengerChoice,
+                    updatedRound.opponentChoice,
+                    game.challengerId,
+                    game.opponentId
+                );
+
+                // Mettre à jour le gagnant de la manche
+                await prisma.chifumiRound.update({
+                    where: { id: updatedRound.id },
+                    data: { winnerId: winner }
+                });
+
+                // Vérifier si le jeu est terminé
+                await this.checkGameCompletion(gameId);
+            }
+
+            return updatedRound;
+        } catch (error) {
+            console.error('Erreur lors du choix chifumi:', error);
+            throw error;
+        }
+    }
+
+    // Déterminer le gagnant d'une manche
+    private static determineRoundWinner(challengerChoice: string, opponentChoice: string, challengerId: string, opponentId: string): string | null {
+        if (challengerChoice === opponentChoice) {
+            return null; // Égalité
+        }
+
+        const winningCombinations = {
+            'ROCK': 'SCISSORS',
+            'PAPER': 'ROCK',
+            'SCISSORS': 'PAPER'
+        };
+
+        if (winningCombinations[challengerChoice as keyof typeof winningCombinations] === opponentChoice) {
+            return challengerId;
+        } else {
+            return opponentId;
+        }
+    }
+
+    // Vérifier si le jeu est terminé
+    private static async checkGameCompletion(gameId: string) {
+        try {
+            const game = await this.getChifumiGame(gameId);
+            if (!game) return;
+
+            // Compter les manches gagnées par chaque joueur
+            let challengerWins = 0;
+            let opponentWins = 0;
+
+            for (const round of game.rounds) {
+                if (round.winnerId === game.challengerId) {
+                    challengerWins++;
+                } else if (round.winnerId === game.opponentId) {
+                    opponentWins++;
+                }
+            }
+
+            // Vérifier si un joueur a gagné 2 manches
+            if (challengerWins >= 2 || opponentWins >= 2) {
+                const winnerId = challengerWins >= 2 ? game.challengerId : game.opponentId;
+                await this.finishChifumiGame(gameId, winnerId);
+            }
+        } catch (error) {
+            console.error('Erreur lors de la vérification de fin de jeu:', error);
+        }
+    }
+
+    // Terminer un jeu de chifumi
+    static async finishChifumiGame(gameId: string, winnerId: string) {
+        try {
+            const game = await this.getChifumiGame(gameId);
+            if (!game) return;
+
+            // Mettre à jour le statut du jeu
+            await prisma.chifumiGame.update({
+                where: { gameId },
+                data: {
+                    status: 'FINISHED',
+                    winnerId
+                }
+            });
+
+            // Transférer les tokens au gagnant
+            const totalPot = game.betAmount * 2; // Mise de chaque joueur
+            await this.addTokens(winnerId, totalPot);
+
+            // Retirer les tokens des perdants
+            const loserId = winnerId === game.challengerId ? game.opponentId : game.challengerId;
+            await this.removeTokens(loserId, game.betAmount);
+
+            // Envoyer un message dans le canal principal
+            await this.announceGameResult(game, winnerId);
+
+            return game;
+        } catch (error) {
+            console.error('Erreur lors de la fin du jeu chifumi:', error);
+            throw error;
+        }
+    }
+
+    // Annoncer le résultat du jeu
+    private static async announceGameResult(game: any, winnerId: string) {
+        try {
+            const mainChannelId = process.env.BOT_MAIN_CHANNEL;
+            if (!mainChannelId) {
+                console.log('❌ BOT_MAIN_CHANNEL non configuré');
+                return;
+            }
+
+            const winner = winnerId === game.challengerId ? game.challenger : game.opponent;
+            const loser = winnerId === game.challengerId ? game.opponent : game.challenger;
+            const totalWinnings = game.betAmount * 2;
+
+            const embed = {
+                color: 0xFFD700,
+                title: '🏆 Victoire au Chifumi !',
+                description: `${winner.username} a remporté la partie contre ${loser.username} !`,
+                fields: [
+                    {
+                        name: '💰 Gains',
+                        value: `${winner.username} remporte **${totalWinnings} ${CURRENCY_NAME}** !`,
+                        inline: true
+                    },
+                    {
+                        name: '🎮 Manches jouées',
+                        value: `${game.rounds.length} manches`,
+                        inline: true
+                    }
+                ],
+                footer: {
+                    text: `ID de jeu: ${game.gameId}`
+                },
+                timestamp: new Date().toISOString()
+            };
+
+            // Note: Cette fonction nécessiterait l'accès au client Discord
+            // Pour l'instant, on log le message
+            console.log(`🏆 ${winner.username} a gagné ${totalWinnings} ${CURRENCY_NAME} contre ${loser.username} !`);
+
+        } catch (error) {
+            console.error('Erreur lors de l\'annonce du résultat:', error);
+        }
+    }
 }
 
 export default prisma; 

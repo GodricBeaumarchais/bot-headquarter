@@ -28,6 +28,11 @@ model User {
   ootdReactions OOTDReaction[]
   commandLogs   CommandLog[]
   reactionLogs  ReactionLog[]
+  // Relations pour les jeux (via les tables de jeu)
+  chifumiGamesAsChallenger ChifumiGame[] @relation("ChifumiChallenger")
+  chifumiGamesAsOpponent  ChifumiGame[] @relation("ChifumiOpponent")
+  chifumiGamesWon         ChifumiGame[] @relation("ChifumiWinner")
+  chifumiRoundsWon        ChifumiRound[] @relation("ChifumiRoundWinner")
 }
 
 model Role {
@@ -79,3 +84,84 @@ model ReactionLog {
   tokensEarned Int?    // Tokens gagnés/perdus si applicable
   createdAt   DateTime @default(now())
 }
+
+// ========================================
+// SYSTÈME DE JEUX - CHIFUMI
+// ========================================
+
+model ChifumiGame {
+  id          String   @id @default(uuid())
+  gameId      String   @unique // ID court pour les liens (ex: "abc123")
+  challengerId String  // ID du joueur qui défie
+  challenger  User     @relation("ChifumiChallenger", fields: [challengerId], references: [discordId])
+  opponentId  String   // ID du joueur défié
+  opponent    User     @relation("ChifumiOpponent", fields: [opponentId], references: [discordId])
+  betAmount   Int      // Montant de la mise en tokens
+  status      ChifumiGameStatus @default(PENDING) // PENDING, ACTIVE, FINISHED, CANCELLED
+  winnerId    String?  // ID du gagnant final
+  winner      User?    @relation("ChifumiWinner", fields: [winnerId], references: [discordId])
+  currentRound Int     @default(1) // Manche actuelle
+  totalRounds Int      @default(3) // Nombre total de manches
+  rounds      ChifumiRound[]
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  expiresAt   DateTime // Expiration de la proposition (24h)
+}
+
+model ChifumiRound {
+  id          String   @id @default(uuid())
+  gameId      String
+  game        ChifumiGame @relation(fields: [gameId], references: [id], onDelete: Cascade)
+  roundNumber Int      // Numéro de la manche (1, 2, 3...)
+  challengerChoice ChifumiChoice? // Choix du challenger
+  opponentChoice   ChifumiChoice? // Choix de l'opposant
+  winnerId    String?  // ID du gagnant de cette manche
+  winner      User?    @relation("ChifumiRoundWinner", fields: [winnerId], references: [discordId])
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  
+  @@unique([gameId, roundNumber])
+}
+
+enum ChifumiGameStatus {
+  PENDING    // En attente d'acceptation
+  ACTIVE     // Partie en cours
+  FINISHED   // Partie terminée
+  CANCELLED  // Partie annulée
+}
+
+enum ChifumiChoice {
+  ROCK       // Pierre
+  PAPER      // Papier
+  SCISSORS   // Ciseaux
+}
+
+// ========================================
+// SYSTÈME DE JEUX - FUTURS MINI-JEUX
+// ========================================
+
+// Exemple de structure pour un futur mini-jeu
+// model DiceGame {
+//   id          String   @id @default(uuid())
+//   gameId      String   @unique
+//   playerId    String
+//   player      User     @relation(fields: [playerId], references: [discordId])
+//   betAmount   Int
+//   diceResult  Int
+//   won         Boolean
+//   tokensWon   Int
+//   createdAt   DateTime @default(now())
+// }
+
+// model CoinFlipGame {
+//   id          String   @id @default(uuid())
+//   gameId      String   @unique
+//   playerId    String
+//   player      User     @relation(fields: [playerId], references: [discordId])
+//   betAmount   Int
+//   choice      String   // "heads" ou "tails"
+//   result      String   // "heads" ou "tails"
+//   won         Boolean
+//   tokensWon   Int
+//   createdAt   DateTime @default(now())
+// }

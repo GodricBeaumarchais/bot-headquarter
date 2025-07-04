@@ -33,6 +33,23 @@ FRONTEND_URL="http://localhost:3000"
 # ========================================
 PORT=3001
 NODE_ENV=development
+
+# ========================================
+# CONFIGURATION DISCORD BOT
+# ========================================
+DISCORD_TOKEN="your_discord_bot_token"
+
+# ========================================
+# CONFIGURATION RÔLES DISCORD
+# ========================================
+DEFAULT_ROLE_ID="1234567890123456789"
+ADMIN_ROLE_ID="9876543210987654321"
+
+# ========================================
+# CONFIGURATION CANAUX DISCORD
+# ========================================
+OOTD_CHANNEL_ID="1234567890123456789"
+BOT_MAIN_CHANNEL="1234567890123456789"
 ```
 
 ## Instructions de configuration

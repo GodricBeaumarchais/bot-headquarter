@@ -6,6 +6,7 @@ import { DatabaseManager } from './utils/database';
 import { BOT_PREFIX } from './utils/constants';
 import * as messageReactionAddEvent from './events/messageReactionAdd';
 import * as messageReactionRemoveEvent from './events/messageReactionRemove';
+import { handleChifumiAccept, handleChifumiDecline, handleChifumiChoice } from './utils/chifumiHandler';
 
 dotenv.config();
 
@@ -82,6 +83,42 @@ client.on(Events.InteractionCreate, async (interaction) => {
 client.on(Events.MessageCreate, async (message: Message) => {
     await prefixCommandHandler.handleMessage(message);
 });
+
+// Gestion des interactions de boutons
+client.on(Events.InteractionCreate, async (interaction) => {
+    if (!interaction.isButton()) return;
+
+    const customId = interaction.customId;
+    
+    if (customId.startsWith('chifumi_')) {
+        await handleChifumiButton(interaction, customId);
+    }
+});
+
+async function handleChifumiButton(interaction: any, customId: string) {
+    try {
+        const parts = customId.split('_');
+        const action = parts[1];
+        
+        if (action === 'accept') {
+            const gameId = parts[2];
+            await handleChifumiAccept(interaction, gameId);
+        } else if (action === 'decline') {
+            const gameId = parts[2];
+            await handleChifumiDecline(interaction, gameId);
+        } else if (action === 'choice') {
+            const gameId = parts[2];
+            const choice = parts[3]; // rock, paper, scissors
+            await handleChifumiChoice(interaction, gameId, choice);
+        }
+    } catch (error) {
+        console.error('Erreur lors du traitement du bouton chifumi:', error);
+        await interaction.reply({
+            content: '❌ Une erreur s\'est produite.',
+            ephemeral: true
+        });
+    }
+}
 
 // Gestion des réactions OOTD (ajout)
 client.on(Events.MessageReactionAdd, async (reaction, user, ...args) => {
