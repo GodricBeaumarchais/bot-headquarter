@@ -6,7 +6,7 @@ async function bootstrap() {
 
   // Active CORS pour autoriser le frontend
   app.enableCors({
-    origin: '0.0.0.0', // autorise uniquement le front local
+    origin: true, // autorise toutes les origines en développement
     credentials: true,
     methods: 'GET,HEAD,PUT,PATCH,POST,DELETE,OPTIONS',
     allowedHeaders: 'Content-Type,Authorization',
