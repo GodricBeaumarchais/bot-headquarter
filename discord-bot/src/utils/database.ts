@@ -803,7 +803,7 @@ export class DatabaseManager {
             });
 
             // Transférer les tokens au gagnant
-            const totalPot = game.betAmount * 2; // Mise de chaque joueur
+            const totalPot = game.betAmount; // Mise de chaque joueur
             await this.addTokens(winnerId, totalPot);
 
             // Retirer les tokens des perdants
