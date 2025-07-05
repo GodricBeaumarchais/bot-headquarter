@@ -57,7 +57,7 @@ export class AuthController {
         username: user.username,
         avatar: user.avatar || undefined,
         discriminator: user.discriminator || undefined,
-        roleId: user.roleId,
+        role: user.role,
       };
       
       const token = this.jwtAuthService.generateToken(jwtPayload);

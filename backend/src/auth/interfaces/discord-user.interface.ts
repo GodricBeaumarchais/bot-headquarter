@@ -25,7 +25,11 @@ export interface JwtPayload {
   username: string;
   avatar?: string;
   discriminator?: string;
-  roleId: string;
+  role: {
+    id: string;
+    name: string;
+    discordId: string;
+  };
   iat?: number;
   exp?: number;
 } 
