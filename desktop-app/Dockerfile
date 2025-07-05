@@ -9,8 +9,11 @@ COPY --from=deps /app/node_modules ./node_modules
 WORKDIR /app/desktop-app
 # Copy all desktop-app files except node_modules and .next
 COPY desktop-app/ ./
-# Set NODE_ENV for build
+# Set environment variables for build
+ARG NEXT_PUBLIC_API_URL
+ENV NEXT_PUBLIC_API_URL=${NEXT_PUBLIC_API_URL}
 ENV NODE_ENV=production
+RUN echo "Building with NEXT_PUBLIC_API_URL: $NEXT_PUBLIC_API_URL"
 RUN npm run build -- --no-lint
 
 FROM node:20-alpine As runner
