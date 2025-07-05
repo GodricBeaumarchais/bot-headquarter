@@ -8,7 +8,6 @@ interface User {
   username: string;
   avatar?: string;
   discriminator?: string;
-  roleId: string;
   role: {
     id: string;
     name: string;
@@ -105,7 +104,6 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
                   username: payload.username,
                   avatar: payload.avatar,
                   discriminator: payload.discriminator,
-                  roleId: payload.roleId,
                   role: payload.role || { id: '', name: '', discordId: '' }
                 });
               } catch (decodeError) {
@@ -133,7 +131,6 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
             username: payload.username,
             avatar: payload.avatar,
             discriminator: payload.discriminator,
-            roleId: payload.roleId,
             role: payload.role || { id: '', name: '', discordId: '' }
           });
           setError(null);

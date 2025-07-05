@@ -51,17 +51,20 @@ const mockLeaderboard: LeaderboardEntry[] = [
 
 const mockUserProfile: UserProfile = {
   id: '1',
-  username: 'godricbeaumarchais',
   discordId: '149234955703025664',
+  username: 'godricbeaumarchais',
+  avatar: null,
+  discriminator: null,
   token: 15000,
-  avatar: undefined,
-  discriminator: undefined,
-  roleId: '1',
+  streak: 0,
+  lastDailyDate: null,
   role: {
     id: '1',
     name: 'Admin',
     discordId: '123456789'
-  }
+  },
+  createdAt: new Date(),
+  updatedAt: new Date()
 };
 
 export const Leaderboard: React.FC = () => {

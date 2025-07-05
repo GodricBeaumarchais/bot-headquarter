@@ -1,16 +1,19 @@
 export interface UserProfile {
   id: string;
-  username: string;
   discordId: string;
+  username: string;
+  avatar: string | null;
+  discriminator: string | null;
   token: number;
-  avatar?: string;
-  discriminator?: string;
-  roleId: string;
+  streak: number;
+  lastDailyDate: Date | null;
   role: {
     id: string;
     name: string;
     discordId: string;
   };
+  createdAt: Date;
+  updatedAt: Date;
 }
 
 export interface LeaderboardEntry {
