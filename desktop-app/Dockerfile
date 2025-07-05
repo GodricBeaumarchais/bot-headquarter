@@ -9,6 +9,8 @@ COPY --from=deps /app/node_modules ./node_modules
 WORKDIR /app/desktop-app
 # Copy all desktop-app files except node_modules and .next
 COPY desktop-app/ ./
+# Set NODE_ENV for build
+ENV NODE_ENV=production
 RUN npm run build -- --no-lint
 
 FROM node:20-alpine As runner
