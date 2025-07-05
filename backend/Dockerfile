@@ -31,4 +31,7 @@ COPY prisma ./prisma
 WORKDIR /app/backend
 EXPOSE 3001
 
+# Install curl for healthcheck
+RUN apk add --no-cache curl
+
 CMD ["npm", "run", "start:prod"]

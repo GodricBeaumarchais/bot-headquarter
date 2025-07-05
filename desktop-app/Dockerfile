@@ -26,4 +26,7 @@ COPY --from=builder /app/desktop-app/package.json ./desktop-app/package.json
 WORKDIR /app/desktop-app
 EXPOSE 3000
 
+# Install wget for healthcheck
+RUN apk add --no-cache wget
+
 CMD ["npm", "run", "start"] 
