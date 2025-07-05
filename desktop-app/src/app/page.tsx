@@ -1,5 +1,6 @@
 'use client';
 
+import { useState, useEffect } from 'react';
 import { ProtectedRoute } from '../components/ProtectedRoute';
 import { useAuth } from '../contexts/AuthContext';
 
@@ -24,7 +25,25 @@ const apps: App[] = [
 ];
 
 export default function HomePage() {
-  const { user, logout } = useAuth();
+  const { user, logout, token } = useAuth();
+  const [profileData, setProfileData] = useState<{discordId?: string} | null>(null);
+
+  // Récupérer les données du profil pour avoir le discordId complet
+  useEffect(() => {
+    if (token) {
+      fetch(`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001'}/users/profile`, {
+        headers: {
+          'Authorization': `Bearer ${token}`,
+        },
+      })
+      .then(res => res.json())
+      .then(data => {
+        console.log('🔍 Données profil pour header:', data);
+        setProfileData(data);
+      })
+      .catch(err => console.error('Erreur récupération profil:', err));
+    }
+  }, [token]);
 
   const handleLogout = () => {
     logout();
@@ -46,14 +65,14 @@ export default function HomePage() {
                 <div className="flex items-center space-x-3">
                   {user?.avatar && (
                     <img
-                      src={`https://cdn.discordapp.com/avatars/${user.discordId}/${user.avatar}.png`}
+                      src={`https://cdn.discordapp.com/avatars/${profileData?.discordId || user.discordId}/${user.avatar}.png`}
                       alt="Avatar"
                       className="w-8 h-8 rounded-full"
                       onLoad={() => console.log('✅ Image chargée avec succès')}
                       onError={(e) => {
                         const target = e.target as HTMLImageElement;
                         console.error('❌ Erreur de chargement image:', target.src);
-                        console.log('🔍 Discord ID:', user.discordId);
+                        console.log('🔍 Discord ID:', profileData?.discordId || user.discordId);
                         console.log('🔍 Avatar:', user.avatar);
                       }}
                     />
