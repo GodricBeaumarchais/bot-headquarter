@@ -49,6 +49,13 @@ export default function HomePage() {
                       src={`https://cdn.discordapp.com/avatars/${user.discordId}/${user.avatar}.png`}
                       alt="Avatar"
                       className="w-8 h-8 rounded-full"
+                      onLoad={() => console.log('✅ Image chargée avec succès')}
+                      onError={(e) => {
+                        const target = e.target as HTMLImageElement;
+                        console.error('❌ Erreur de chargement image:', target.src);
+                        console.log('🔍 Discord ID:', user.discordId);
+                        console.log('🔍 Avatar:', user.avatar);
+                      }}
                     />
                   )}
                   <span className="text-white font-medium">

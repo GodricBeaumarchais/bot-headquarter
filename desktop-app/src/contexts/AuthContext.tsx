@@ -101,7 +101,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
                 console.log('🔍 Payload du token décodé:', payload);
                 setToken(storedToken);
                 setUser({
-                  discordId: payload.sub,
+                  discordId: payload.discordId,
                   username: payload.username,
                   avatar: payload.avatar,
                   discriminator: payload.discriminator,
@@ -129,7 +129,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
           console.log('🔍 Payload du token décodé (fallback):', payload);
           setToken(storedToken);
           setUser({
-            discordId: payload.sub,
+            discordId: payload.discordId,
             username: payload.username,
             avatar: payload.avatar,
             discriminator: payload.discriminator,
