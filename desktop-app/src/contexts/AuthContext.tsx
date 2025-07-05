@@ -98,6 +98,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
               // Décodage local du token (optionnel)
               try {
                 const payload = JSON.parse(atob(storedToken.split('.')[1]));
+                console.log('🔍 Payload du token décodé:', payload);
                 setToken(storedToken);
                 setUser({
                   discordId: payload.sub,
@@ -125,6 +126,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
         // Si le backend n'est pas accessible ou si la vérification est désactivée, utiliser le token stocké
         try {
           const payload = JSON.parse(atob(storedToken.split('.')[1]));
+          console.log('🔍 Payload du token décodé (fallback):', payload);
           setToken(storedToken);
           setUser({
             discordId: payload.sub,
@@ -163,11 +165,10 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
         username: payload.username,
         avatar: payload.avatar,
         discriminator: payload.discriminator,
-        roleId: payload.roleId,
         role: payload.role || { id: '', name: '', discordId: '' }
       };
       setUser(userData);
-      console.log('✅ Utilisateur connecté:', userData.username);
+      console.log('✅ Utilisateur connecté:', userData);
     } catch (error) {
       console.error('❌ Erreur de décodage du token:', error);
       setError('Erreur de décodage du token');
@@ -191,6 +192,13 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
       isLoading, 
       hasToken: !!token, 
       hasUser: !!user,
+      userDetails: user ? {
+        discordId: user.discordId,
+        username: user.username,
+        avatar: user.avatar,
+        discriminator: user.discriminator,
+        role: user.role
+      } : null,
       error 
     });
   }, [isAuthenticated, isLoading, token, user, error]);
