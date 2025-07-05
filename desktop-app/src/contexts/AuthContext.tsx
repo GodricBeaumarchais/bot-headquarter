@@ -201,6 +201,13 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
       } : null,
       error 
     });
+    
+    // Log temporaire pour debug
+    if (user) {
+      console.log('🔍 DEBUG - Discord ID:', user.discordId);
+      console.log('🔍 DEBUG - Avatar:', user.avatar);
+      console.log('🔍 DEBUG - Username:', user.username);
+    }
   }, [isAuthenticated, isLoading, token, user, error]);
 
   const contextValue = useMemo(() => ({
