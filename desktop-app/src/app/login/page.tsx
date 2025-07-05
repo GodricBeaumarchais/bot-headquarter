@@ -49,8 +49,12 @@ export default function LoginPage() {
   }, [login, isProcessing, hasRedirected, handleRedirect]);
 
   const handleDiscordLogin = useCallback(() => {
-    console.log('🎮 Redirection vers Discord OAuth...');
     const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001';
+    console.log('🎮 Redirection vers Discord OAuth...', {
+      NEXT_PUBLIC_API_URL: process.env.NEXT_PUBLIC_API_URL,
+      apiUrl,
+      fullUrl: `${apiUrl}/auth/discord`
+    });
     window.location.href = `${apiUrl}/auth/discord`;
   }, []);
 
