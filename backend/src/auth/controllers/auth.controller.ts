@@ -93,7 +93,7 @@ export class AuthController {
     const params = new URLSearchParams();
     params.append('client_id', process.env.DISCORD_CLIENT_ID || '');
     params.append('response_type', 'code');
-    params.append('redirect_uri', 'http://localhost:3001/auth/discord/callback');
+    params.append('redirect_uri', process.env.DISCORD_REDIRECT_URI || 'http://localhost:3001/auth/discord/callback');
     params.append('scope', 'identify email');
 
     const testUrl = `https://discord.com/oauth2/authorize?${params.toString()}`;
