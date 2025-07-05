@@ -4,7 +4,7 @@ export const AUTH_CONFIG = {
   SKIP_BACKEND_VERIFICATION: process.env.NODE_ENV === 'development',
   
   // URL du backend
-  BACKEND_URL: process.env.NEXT_PUBLIC_BACKEND_URL || 'http://localhost:3001',
+  BACKEND_URL: process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001',
   
   // Timeout pour les requêtes
   REQUEST_TIMEOUT: 5000,

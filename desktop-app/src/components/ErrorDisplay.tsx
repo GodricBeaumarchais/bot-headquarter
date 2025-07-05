@@ -15,7 +15,7 @@ export const ErrorDisplay: React.FC = () => {
       </div>
       <p className="mt-2 text-sm">{error}</p>
       <div className="mt-3 text-xs text-red-300">
-        <p>• Vérifiez que votre backend est démarré sur http://localhost:3001</p>
+        <p>• Vérifiez que votre backend est démarré sur {process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001'}</p>
         <p>• Utilisez le bouton "Clear" pour nettoyer le localStorage</p>
         <p>• Vérifiez les logs de la console pour plus de détails</p>
       </div>

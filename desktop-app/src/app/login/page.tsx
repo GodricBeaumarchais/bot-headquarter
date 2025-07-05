@@ -50,7 +50,8 @@ export default function LoginPage() {
 
   const handleDiscordLogin = useCallback(() => {
     console.log('🎮 Redirection vers Discord OAuth...');
-    window.location.href = 'http://localhost:3001/auth/discord';
+    const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001';
+    window.location.href = `${apiUrl}/auth/discord`;
   }, []);
 
   // Si on est en train de rediriger, afficher un loader
