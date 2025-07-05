@@ -7,14 +7,8 @@ FROM node:20-alpine As builder
 WORKDIR /app
 COPY --from=deps /app/node_modules ./node_modules
 WORKDIR /app/desktop-app
-COPY desktop-app/src ./src
-COPY desktop-app/public ./public
-COPY desktop-app/tsconfig.json ./tsconfig.json
-COPY desktop-app/next.config.ts ./next.config.ts
-COPY desktop-app/postcss.config.mjs ./postcss.config.mjs
-COPY desktop-app/package.json ./package.json
-COPY desktop-app/next-env.d.ts ./next-env.d.ts
-COPY desktop-app/eslint.config.mjs ./eslint.config.mjs
+# Copy all desktop-app files except node_modules and .next
+COPY desktop-app/ ./
 RUN npm run build
 
 FROM node:20-alpine As runner
