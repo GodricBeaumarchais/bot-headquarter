@@ -66,7 +66,7 @@ export const api = {
 
   // Récupérer le profil utilisateur
   async getUserProfile(token: string): Promise<UserProfile> {
-    const url = `${API_BASE_URL}/users/profile`;
+    const url = `${API_BASE_URL}/user/profile`;
     console.log('🌐 Tentative de connexion au profil:', url);
     
     try {
