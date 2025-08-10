@@ -1,7 +1,7 @@
 import dotenv from 'dotenv';
 import { Client, GatewayIntentBits, Message, Events, Partials } from 'discord.js';
 import { CommandHandler } from './utils/commandHandler';
-import { PrefixCommandHandler } from './utils/prefixCommandHandler';
+import { PrefixCommandHandler } from './commands/prefix';
 import { DatabaseManager } from './utils/database';
 import { BOT_PREFIX } from './utils/constants';
 import * as messageReactionAddEvent from './events/messageReactionAdd';

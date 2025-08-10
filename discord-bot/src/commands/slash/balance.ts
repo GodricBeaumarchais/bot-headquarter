@@ -1,6 +1,6 @@
 import { SlashCommandBuilder, ChatInputCommandInteraction, EmbedBuilder } from 'discord.js';
 import { Command } from '../../types/Command';
-import { DatabaseManager } from '../../utils/database';
+import { balanceBehavior } from '../../behaviors/money/balance';
 
 export const data = new SlashCommandBuilder()
     .setName('balance')
@@ -14,30 +14,24 @@ export const data = new SlashCommandBuilder()
 export const execute: Command['execute'] = async (interaction: ChatInputCommandInteraction) => {
     const targetUser = interaction.options.getUser('utilisateur') || interaction.user;
     
-    try {
-        // Récupérer l'utilisateur dans la base
-        const user = await DatabaseManager.getUser(targetUser.id);
-        
-        if (!user) {
-            await interaction.reply({
-                content: '❌ Cet utilisateur n\'a pas encore de compte. Utilisez `!hq signin` pour créer un compte.',
-                ephemeral: true
-            });
-            return;
-        }
-        
+    const result = await balanceBehavior(
+        interaction.user.id, 
+        targetUser.id, 
+        targetUser.username
+    );
+    
+    if (result.success && result.user) {
         const embed = new EmbedBuilder()
             .setColor('#00ff00')
             .setTitle('💰 Solde de tokens')
-            .setDescription(`${targetUser.username} a **${user.token}** tokens`)
+            .setDescription(`${targetUser.username} a **${result.user.token}** tokens`)
             .setThumbnail(targetUser.displayAvatarURL())
             .setTimestamp();
         
         await interaction.reply({ embeds: [embed] });
-    } catch (error) {
-        console.error('Erreur lors de la récupération du solde:', error);
+    } else {
         await interaction.reply({
-            content: '❌ Erreur lors de la récupération du solde',
+            content: result.message,
             ephemeral: true
         });
     }
