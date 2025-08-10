@@ -1,5 +1,5 @@
-import { DatabaseManager } from '../../../utils/database';
-import { CURRENCY_NAME, DAILY_REWARD } from '../../../utils/constants';
+import { DatabaseManager } from '../../utils/database';
+import { CURRENCY_NAME, DAILY_REWARD } from '../../utils/constants';
 
 export interface DailyResult {
     success: boolean;

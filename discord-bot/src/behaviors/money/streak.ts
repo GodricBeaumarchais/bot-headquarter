@@ -1,4 +1,4 @@
-import { DatabaseManager } from '../../../utils/database';
+import { DatabaseManager } from '../../utils/database';
 
 export interface StreakResult {
     success: boolean;

@@ -1,5 +1,5 @@
-import { DatabaseManager } from '../../../utils/database';
-import { CURRENCY_NAME } from '../../../utils/constants';
+import { DatabaseManager } from '../../utils/database';
+import { CURRENCY_NAME } from '../../utils/constants';
 
 export interface LeaderboardResult {
     success: boolean;

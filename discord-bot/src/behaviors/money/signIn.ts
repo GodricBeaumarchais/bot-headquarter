@@ -1,5 +1,5 @@
-import { DatabaseManager } from '../../../utils/database';
-import { CURRENCY_NAME, STARTING_BALANCE, COIN_EMOTE } from '../../../utils/constants';
+import { DatabaseManager } from '../../utils/database';
+import { CURRENCY_NAME, STARTING_BALANCE, COIN_EMOTE } from '../../utils/constants';
 
 export interface SignInResult {
     success: boolean;
