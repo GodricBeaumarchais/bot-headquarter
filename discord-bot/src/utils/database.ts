@@ -213,7 +213,7 @@ export class DatabaseManager {
                         lastDailyDate: now
                     }
                 });
-
+    
                 return {
                     ...updatedUser,
                     bonusMessage: '',
@@ -242,6 +242,10 @@ export class DatabaseManager {
             } else {
                 // Plus d'un jour : reset le streak
                 newStreak = 1;
+            }
+
+            if ( newStreak >= 50 ){
+                newStreak = 1
             }
 
             // Calculer le bonus de streak (streak divisé par 5, seulement les jours multiples de 5)
